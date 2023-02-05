@@ -1,5 +1,6 @@
 import { Post } from "@/atoms/postsAtom";
 import { firestore, storage } from "@/firebase/clientApp";
+import { useSelectFile } from "@/hooks/useSelectFile";
 import {
   Alert,
   AlertDescription,
@@ -65,7 +66,7 @@ const NewPostForm: React.FC<NewPostFormProps> = ({ user }) => {
     title: "",
     body: "",
   });
-  const [selectedFile, setSelectedFile] = useState<string>();
+  const { selectedFile, onSelectFile, setSelectedFile } = useSelectFile();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -111,18 +112,6 @@ const NewPostForm: React.FC<NewPostFormProps> = ({ user }) => {
     setLoading(false);
   };
 
-  const onSelectImage = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const reader = new FileReader();
-    if (event.target.files?.[0]) {
-      reader.readAsDataURL(event.target.files[0]);
-    }
-    reader.onload = (readerEvent) => {
-      if (readerEvent.target?.result) {
-        setSelectedFile(readerEvent.target.result as string);
-      }
-    };
-  };
-
   const onTextChange = ({
     target: { name, value },
   }: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -155,7 +144,7 @@ const NewPostForm: React.FC<NewPostFormProps> = ({ user }) => {
         )}
         {selectedTab === "Images & Video" && (
           <ImageUpload
-            onSelectImage={onSelectImage}
+            onSelectImage={onSelectFile}
             setSelectedTab={setSelectedTab}
             selectedFile={selectedFile}
             setSelectedFile={setSelectedFile}
