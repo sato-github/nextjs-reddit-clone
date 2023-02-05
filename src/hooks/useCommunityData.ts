@@ -47,7 +47,6 @@ export const useCommunityData = () => {
         collection(firestore, `users/${user?.uid}/communitySnippets`)
       );
       const snippets = snippetDocs.docs.map((doc) => ({ ...doc.data() }));
-      console.log("snippets :", snippets);
       setCommunityStateValue((prev) => ({
         ...prev,
         mySnippets: snippets as CommunitySnippet[],
