@@ -13,6 +13,7 @@ import {
 } from "@chakra-ui/react";
 import moment from "moment";
 import Link from "next/link";
+import { useRouter } from "next/router";
 import React, { useState } from "react";
 import { AiOutlineDelete } from "react-icons/ai";
 import { BsChat, BsDot } from "react-icons/bs";
@@ -37,7 +38,8 @@ type PostItemProps = {
     communityId: string
   ) => void;
   onDeletePost: (post: Post) => Promise<boolean>;
-  onSelectPost: () => void;
+  onSelectPost?: (post: Post) => void;
+  homePage?: boolean;
 };
 
 const PostItem: React.FC<PostItemProps> = ({
@@ -47,11 +49,13 @@ const PostItem: React.FC<PostItemProps> = ({
   onVote,
   onDeletePost,
   onSelectPost,
+  homePage,
 }) => {
   const [loadingImage, setLoadingImage] = useState(true);
   const [loadingDelete, setLoadingDelete] = useState(false);
-  const singlePostView = !onSelectPost;
+  const singlePostView = !onSelectPost; // if onSelectPost is not passed, then it means its a single post page
   const [error, setError] = useState("");
+  const router = useRouter();
 
   const handleDelete = async (
     event: React.MouseEvent<HTMLDivElement, MouseEvent>
@@ -61,8 +65,9 @@ const PostItem: React.FC<PostItemProps> = ({
     try {
       const success = await onDeletePost(post);
       if (!success) throw new Error("Failed to delete post");
-
-      console.log("Post successfully deleted");
+      if (singlePostView) {
+        router.push(`/r/${post.communityId}`);
+      }
     } catch (error: any) {
       console.error("Error deleting post", error.message);
       setError(error.message);
@@ -78,7 +83,7 @@ const PostItem: React.FC<PostItemProps> = ({
       borderRadius={singlePostView ? "4px 4px 0px 0px" : 4}
       cursor={singlePostView ? "unset" : "pointer"}
       _hover={{ borderColor: singlePostView ? "none" : "gray.500" }}
-      onClick={onSelectPost}
+      onClick={() => onSelectPost && onSelectPost(post)}
     >
       <Flex
         direction="column"
@@ -121,6 +126,28 @@ const PostItem: React.FC<PostItemProps> = ({
         )}
         <Stack spacing={1} p="10px 10px">
           <Stack direction="row" spacing={0.6} align="center" fontSize="9pt">
+            {homePage && (
+              <>
+                {post.communityImageURL ? (
+                  <Image
+                    src={post.communityImageURL}
+                    borderRadius="full"
+                    boxSize="18px"
+                    mr={2}
+                  />
+                ) : (
+                  <Icon as={FaReddit} fontSize="18pt" mr={1} color="blue.500" />
+                )}
+                <Link href={`r/${post.communityId}`}>
+                  <Text
+                    fontWeight={700}
+                    _hover={{ textDecoration: "underline" }}
+                    onClick={(event) => event.stopPropagation()}
+                  >{`r/${post.communityId}`}</Text>
+                </Link>
+                <Icon as={BsDot} color="gray.500" fontSize={8} />
+              </>
+            )}
             <Text color="gray.500">
               Posted by u/{post.creatorDisplayName}{" "}
               {moment(new Date(post.createdAt.seconds * 1000)).fromNow()}

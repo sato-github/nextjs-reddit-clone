@@ -8,10 +8,12 @@ import { auth, firestore } from "@/firebase/clientApp";
 import {
   collection,
   doc,
+  getDoc,
   getDocs,
   increment,
   writeBatch,
 } from "firebase/firestore";
+import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { useRecoilState, useSetRecoilState } from "recoil";
@@ -23,6 +25,8 @@ export const useCommunityData = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const setAuthModalState = useSetRecoilState(authModalState);
+  const router = useRouter();
+
   const onJoinOrLeaveCommunity = (
     communityData: Community,
     isJoined: boolean
@@ -50,6 +54,7 @@ export const useCommunityData = () => {
       setCommunityStateValue((prev) => ({
         ...prev,
         mySnippets: snippets as CommunitySnippet[],
+        snippetsFetched: true,
       }));
     } catch (error: any) {
       console.error("getMySnippets :", error.message);
@@ -67,6 +72,7 @@ export const useCommunityData = () => {
       const newSnippet: CommunitySnippet = {
         communityId: communityData.id,
         imageURL: communityData.imageURL || "",
+        isModerator: user?.uid === communityData.creatorId,
       };
 
       batch.set(
@@ -122,11 +128,39 @@ export const useCommunityData = () => {
     setLoading(false);
   };
 
+  const getCommunityData = async (communityId: string) => {
+    try {
+      const communityDocRef = doc(
+        firestore,
+        "communities",
+        communityId as string
+      );
+      const communityDoc = await getDoc(communityDocRef);
+      setCommunityStateValue((prev) => ({
+        ...prev,
+        currentCommunity: {
+          id: communityDoc.id,
+          ...communityDoc.data(),
+        } as Community,
+      }));
+    } catch (error: any) {
+      console.error("getCommunityData :", error.message);
+    }
+  };
+
+  useEffect(() => {
+    const { communityId } = router.query;
+    if (communityId && !communityStateValue.currentCommunity) {
+      getCommunityData(communityId as string);
+    }
+  }, [router.query, communityStateValue.currentCommunity]);
+
   useEffect(() => {
     if (!user) {
       setCommunityStateValue((prev) => ({
         ...prev,
         mySnippets: [],
+        snippetsFetched: false,
       }));
       return;
     }

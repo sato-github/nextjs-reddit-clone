@@ -27,7 +27,7 @@ const CommunityPage: React.FC<CommunityPageProps> = ({ communityData }) => {
       ...prev,
       currentCommunity: communityData,
     }));
-  }, []);
+  }, [communityData]);
 
   return (
     <>
@@ -65,7 +65,6 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       },
     };
   } catch (error: any) {
-    // TODO: Add error page
     console.error("getServerSideProps :", error.message);
   }
 }
